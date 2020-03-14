@@ -1,3 +1,4 @@
+# -*-coding:utf-8-*-
 import gym
 from collections import namedtuple
 from tqdm import tqdm
@@ -100,7 +101,6 @@ memory = ReplayMemory(5000)
 optimizer = optim.Adam(policy_net.parameters(), lr=args.lr)
 func = nn.MSELoss()
 writer = SummaryWriter()
-
 
 
 def select_action(current_state, action_nums):

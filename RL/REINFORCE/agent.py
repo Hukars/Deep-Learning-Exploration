@@ -1,3 +1,4 @@
+# -*-coding:utf-8-*-
 class Experience:
     def __init__(self, gamma):
         self.transition_list = []
