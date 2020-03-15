@@ -9,7 +9,7 @@ import math
 from collections import namedtuple
 
 from RL.REINFORCE.agent import Experience
-from RL.REINFORCE.policy_disc_action import PolicyDisc
+from RL.models.policy_disc_action import PolicyDisc
 
 
 def get_args():
