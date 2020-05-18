@@ -2,6 +2,7 @@
 import gym
 import itertools
 import argparse
+import time
 import torch.optim as optim
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
@@ -16,7 +17,7 @@ env = make_env(env)
 
 # 参数
 parser = argparse.ArgumentParser()
-parser.add_argument('--using_double', type=bool, default=True, help='if using_double, use Double DQN')
+parser.add_argument('--using_double', type=bool, default=False, help='if using_double, use Double DQN')
 parser.add_argument('--max_steps', type=int, default=10000000, help='number of epochs of training')
 parser.add_argument('--memory_capacity', type=int, default=1000000, help='the replay memory maximum size')
 parser.add_argument('--batch_size', type=int, default=64, help='the batch size for policy improvement')
@@ -25,7 +26,7 @@ parser.add_argument('--epsilon_start', type=float, default=1.0, help='the epsilo
 parser.add_argument('--epsilon_decay', type=int, default=1000000, help='epsilon anneal over this times')
 parser.add_argument('--epsilon_end', type=float, default=0.1, help='the final epsilon value after annealing')
 parser.add_argument('--gamma', type=float, default=0.99, help='the discount factor')
-parser.add_argument('--target_update', type=int, default=500, help='the period for update the target network')
+parser.add_argument('--target_update', type=int, default=1000, help='the period for update the target network')
 parser.add_argument('--states_number', type=int, default=40000, help='sample some states as the measure set')
 parser.add_argument('--render', type=bool, default=True, help='if render the picture ')
 parser.add_argument('--seed', type=int, default=1, help='random seed')
@@ -50,7 +51,7 @@ memory = Memory(args.memory_capacity)
 
 optimizer = optim.Adam(policy_net.parameters(), lr=args.lr)
 func = nn.MSELoss()
-writer = SummaryWriter()
+# writer = SummaryWriter()
 
 
 def select_action(current_state, action_nums):
@@ -111,8 +112,10 @@ def observation_to_state(obs: LazyFrames):
 # Training the model
 total_steps = 0
 update = 0
-for i_episode in tqdm(itertools.count(1)):
-    print(f'episode {i_episode}')
+max_episode_reward = 0
+for i_episode in itertools.count(1):
+    print(f'episode {i_episode}, total_step:{total_steps}')
+    start = time.time()
     observation = env.reset()
     state = observation_to_state(observation)
     done = False
@@ -130,13 +133,15 @@ for i_episode in tqdm(itertools.count(1)):
         total_steps += 1
         update += 1
         optimize_model()
-
-    print(f'Complete episode{i_episode}, total_reward:{episode_reward}')
+    time_cost = time.time() - start
+    max_episode_reward = max(episode_reward, max_episode_reward)
+    print(f'Complete episode{i_episode}, time_cost:{time_cost}, episode_reward:{episode_reward},'
+          f' max_episode_reward:{max_episode_reward}')
     if total_steps > args.max_steps:
         break
 
 torch.save(policy_net.state_dict(), 'q_net.pt')
 print('Training Complete!')
-writer.close()
+# writer.close()
 env.close()
 

@@ -6,7 +6,7 @@ Input are the environment state
 
 
 class ValueCritic(nn.Module):
-    def __init__(self, state_dim, hidden_size):
+    def __init__(self, state_dim, hidden_size=256):
         super(ValueCritic, self).__init__()
 
         self.value_model = nn.Sequential(

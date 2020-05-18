@@ -41,7 +41,7 @@ class DiscretePolicy(nn.Module):
 
     def log_prob(self, x, action):
         probs = self.forward(x)
-        return torch.log(probs.gather(0, action.long()))
+        return torch.log(probs.gather(1, action.long()))
 
 
 class GaussianPolicy(nn.Module):
@@ -109,3 +109,10 @@ class ReparameterGaussianPolicy(GaussianPolicy):
         mean = torch.tanh(mean) * self.action_scale + self.action_bias
         return action, log_prob, mean
 
+
+if __name__ == '__main__':
+    policy = DiscretePolicy(4, 3)
+    a = torch.tensor([[1.1, 2, 3, 4], [2.3, 4, 5, 6]])
+    action = torch.tensor([[1.0], [2]])
+    x = policy(a)
+    print(x.gather(1, action.long()))

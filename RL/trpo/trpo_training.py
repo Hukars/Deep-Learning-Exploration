@@ -2,9 +2,8 @@ import gym
 import argparse
 
 from RL.utils import *
-from RL.models.value import Value
-from RL.models.policy_disc_action import PolicyDisc
-from RL.models.policy_cont_action import PolicyCont
+from RL.models.critic import ValueCritic
+from RL.models.policy import DiscretePolicy, GaussianPolicy
 from RL.models.agent import Agent
 
 parser = argparse.ArgumentParser()
@@ -29,11 +28,11 @@ def main():
     running_state = ZFilter((state_dim,), clip=5.0)
 
     # model
-    value_net = Value(state_dim)
+    value_net = ValueCritic(state_dim)
     if is_disc_action:
-        policy_net = PolicyDisc(state_dim, env.action_space.n).to(device)
+        policy_net = DiscretePolicy(state_dim, env.action_space.n).to(device)
     else:
-        policy_net = PolicyCont(state_dim, env.action_space.shape[0]).to(device)
+        policy_net = GaussianPolicy(state_dim, env.action_space.shape[0]).to(device)
     agent = Agent(env, policy_net, running_state, args.render, args.num_thread)
 
     # seed

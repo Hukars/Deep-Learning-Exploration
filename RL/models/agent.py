@@ -26,24 +26,28 @@ class Agent:
             trajectory_reward = 0
             state = self.env.reset()
             if self.running_state is not None:
-                state = torch.tensor(self.running_state(state)).float().squeeze(0)
-
+                state = self.running_state(state)
+            state = torch.tensor(state).float().unsqueeze(0)
             for t in range(5000):
                 if self.render:
                     self.env.render()
                 # select action
                 with torch.no_grad():
                     if self.policy.is_disc_actions:
-                        action = int(self.policy.select_action(state)[0][0].numpy())
+                        action = self.policy.select_action(state)
                     else:
-                        action = self.policy.select_action(state)[0].numpy().astype(np.float64)
-                next_state, reward, done, _ = self.env.step(action)
+                        action = self.policy.select_action(state) # [0].numpy().astype(np.float64)
+                old_log_prob = self.policy.log_prob(state, action)
+                next_state, reward, done, _ = self.env.step(action[0].numpy())
 
                 trajectory_reward += reward
                 if self.running_state is not None:
                     next_state = self.running_state(next_state)
-                mask = 1 if done else 0
-                memory.push(state, action, mask, next_state, reward)
+
+                reward = torch.tensor([reward]).float()
+                mask = torch.tensor([0.0] if done else [1.0])
+                next_state = torch.tensor(next_state).float().unsqueeze(0)
+                memory.push(state, action, reward, next_state, mask, old_log_prob)
                 state = next_state
 
                 if done:

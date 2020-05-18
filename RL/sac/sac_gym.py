@@ -13,7 +13,7 @@ from RL.utils import *
  parameters
 """
 parser = argparse.ArgumentParser()
-parser.add_argument('--env_name', default="Hopper-v2", help='name of the environment to run')
+parser.add_argument('--env_name', default="Hopper-v2", help="name of the environment to run")
 parser.add_argument('--max_steps', type=int, default=1000001, help="the total sample steps in env")
 parser.add_argument('--batch_size', type=int, default=512, help="batch learning size")
 parser.add_argument('--gradient_step', type=int, default=1, help="gradient descent times per learning")

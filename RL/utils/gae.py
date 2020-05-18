@@ -2,7 +2,7 @@ import torch
 from RL.utils.tools import to_device
 
 
-def estimate_advantages(rewards, values, masks, gamma, lambda_, device):
+def estimate_advantages(rewards, values, masks, gamma, lambda_):
     size = rewards.shape[0]
     advantages = torch.zeros(size, 1)
 
@@ -18,6 +18,6 @@ def estimate_advantages(rewards, values, masks, gamma, lambda_, device):
     returns = values + advantages
     #advantages = (advantages - advantages.mean()) / advantages.std()
 
-    to_device(device, advantages, returns)
+    # to_device(device, advantages, returns)
     return advantages, returns
 
