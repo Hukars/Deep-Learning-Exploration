@@ -1,5 +1,6 @@
 # -*-coding:utf-8-*-
-from multiprocessing import Process, Queue
+# from multiprocessing import Process, Queue
+import multiprocessing
 import sys
 import time
 from RL.utils import *
@@ -14,6 +15,7 @@ class Agent:
         self.num_thread = num_threads
 
     def collect_samples(self, pid, queue, total_steps):
+        print(pid)
         num_steps = 0
         num_episodes = 0
         total_reward = 0
@@ -66,35 +68,61 @@ class Agent:
         log['avg_steps'] = num_steps / num_episodes
         log['max_reward'] = max_reward
         log['min_reward'] = min_reward
-
-        queue.put([pid, memory, log])
+        print('here', pid)
+        if queue is not None:
+            queue.put([pid, memory, log])
+            print('queue')
+        else:
+            return memory, log
 
     def process_sample(self, batch_size):
         t_start = time.time()
         mini_batch_size = int(batch_size / self.num_thread)
-        queue = Queue()
+        my_queue = multiprocessing.Queue()
         workers = []
         self.policy.to(torch.device('cpu'))
 
-        for i in range(self.num_thread):
-            args = (i+1, queue, mini_batch_size)
-            workers.append(Process(target=self.collect_samples, args=args))
+        # for i in range(self.num_thread):
+        #     args = (i+1, queue, mini_batch_size)
+        #     workers.append(Process(target=self.collect_samples, args=args))
+        # print("Get here1!")
+        # for p in workers:
+        #     p.start()
+        #
+        # memories = [None] * self.num_thread
+        # logs = [None] * self.num_thread
+        # print("Get here2!")
+        # for _ in range(self.num_thread):
+        #     information = queue.get()
+        #     memories[information[0]-1] = information[1]
+        #     logs[information[0]-1] = information[2]
+        # print("Get here3!")
 
-        for p in workers:
-            p.start()
+        for i in range(self.num_thread - 1):
+            args = (i+1, my_queue, mini_batch_size)
+            workers.append(multiprocessing.Process(target=self.collect_samples, args=args))
+        print(len(workers))
+        for worker in workers:
+            worker.start()
+        memory, log = self.collect_samples(0, None, mini_batch_size)
+        worker_logs = [None] * len(workers)
+        worker_memories = [None] * len(workers)
+        for _ in workers:
+            pid, worker_memory, worker_log = my_queue.get()
+            print("Get here4!")
+            worker_memories[pid - 1] = worker_memory
+            worker_logs[pid - 1] = worker_log
+        print("Get here3!")
+        for worker_memory in worker_memories:
+            memory.append(worker_memory)
 
-        memories = [None] * self.num_thread
-        logs = [None] * self.num_thread
-        for _ in range(self.num_thread):
-            information = queue.get()
-            memories[information[0]-1] = information[1]
-            logs[information[0]-1] = information[2]
 
         # combine all the information for returning
-        combined_memory = memories[0]
-        for j in range(len(memories)-1):
-            combined_memory.append(memories[j+1])
-        batch = combined_memory.sample(batch_size)
+        # combined_memory = memories[0]
+        # for j in range(len(memories)-1):
+        #     combined_memory.append(memories[j+1])
+        # batch = combined_memory.sample()
+        batch = memory.sample()
 
         combined_log = dict()
         combined_log['num_step'] = sum([log['num_steps'] for log in logs])

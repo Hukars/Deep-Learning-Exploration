@@ -59,6 +59,8 @@ class GaussianPolicy(nn.Module):
             nn.Linear(hidden_size, action_dim),
         )
 
+        self.is_disc_actions = False
+
         # action rescaling
         if action_space is not None:
             self.action_scale = torch.tensor(1.).to(device)
@@ -78,7 +80,7 @@ class GaussianPolicy(nn.Module):
     def select_action(self, x):
         action_mean, action_std = self.forward(x)
         normal = Normal(action_mean, action_std)
-        return torch.tanh(normal.sample()) * self.action_scale + self.action_bias
+        return torch.tanh(normal.sample()) # * self.action_scale + self.action_bias
 
     def log_prob(self, x, y):
         action_mean, action_std = self.forward(x)
